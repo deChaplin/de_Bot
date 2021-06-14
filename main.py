@@ -10,10 +10,6 @@ from itertools import cycle
 
 from keep_alive import keep_alive #keeps the bot running using Uptimerobot to ping it
 
-
-
-
-
 #Makes the bot use prefixes.json
 def get_prefix(client, message):
     with open("prefixes.json", "r") as f:
@@ -21,7 +17,7 @@ def get_prefix(client, message):
 
     return prefixes[str(message.guild.id)]
 
-intents = discord.Intents(messages=True, guilds=True, reactions=True, members=True) #for autorole
+intents = discord.Intents().all()
 client = commands.Bot(command_prefix = get_prefix, intents = intents)     #sets the command_prefix
 client.remove_command('help')   #removes default help command
 
@@ -31,8 +27,6 @@ client.remove_command('help')   #removes default help command
 
 #When bot joins the server...
 @client.event
-
-
 async def on_guild_join(guild):
     with open("prefixes.json", "r") as f:
         prefixes = json.load(f)
@@ -55,10 +49,9 @@ async def on_guild_remove(guild):
 
 
 #When bot is pinged...
-
 @client.event
 async def on_message(msg):
-print("User ID: ", message.author.id)
+    
     try:
 
         if msg.mentions[0] == client.user:
@@ -78,7 +71,6 @@ print("User ID: ", message.author.id)
 
 #Global variables
 colours = [0x1abc9c, 0x11806a, 0x2ecc71, 0x1f8b4c, 0x3498db, 0x206694, 0x9b59b6, 0x71368a, 0xe91e63, 0xad1457, 0xf1c40f, 0xc27c0e, 0xe67e22, 0xa84300, 0xe74c3c, 0x992d22, 0x95a5a6, 0x607d8b, 0x979c9f, 0x546e7a, 0x7289da, 0x99aab5]
-#status = cycle([".", ".h", ".he", ".hel", ".help", ".help f", ".help fo", ".help for", ".help for c", ".help for co", ".help for com", ".help for comm", ".help for comma", ".help for comman", ".help for command", ".help for commands"]) #,".help for command",".help for comman",".help for comma",".help for comm",".help for com",".help for co",".help for c",".help for",".help fo",".help f",".help",".hel",".he",".h","."])
 
 #status = cycle([".help for commands", ".help", ".help for", ".help for commands"])
 status = cycle(["@me for prefix", "Default prefix is '.'"])
@@ -113,6 +105,23 @@ async def on_command_error(ctx, error):
 async def on_member_join(ctx):
     autorole = discord.utils.get(ctx.guild.roles, name = 'Member')
     await ctx.add_roles(autorole)
+#JOINING MESSAGE
+@client.event
+async def on_member_join(member):
+    
+    welcomeembed = discord.Embed(colour = random.choice(colours), title = f"Welcome {member.name} to the server!", description = f" {member.mention} Choose roles in the role selection channel😁")
+
+    WelcomeLog = discord.Embed(colour = random.choice(colours), title = "Someone joined the server", description = f"{member.mention} joined the server")
+
+    await client.get_channel(744227491085811773).send(embed = welcomeembed) #Sends the message to the welcome channel
+    await client.get_channel(744227511650484305).send(embed = WelcomeLog) #Sends the message to the log channel
+#LEAVING MESSAGE
+@client.event
+async def on_member_remove(member):
+
+    LeavingLog = discord.embed(colour = random.choice(colours), title = "Someone left the server", description = f"{member.mention} left the server")
+    await client.get_channel(744227511650484305).send(embed = LeavingLog) #Sends the message to the log channel
+
 #COOLDOWN
 @client.event
 async def on_command_error(ctx, error):
@@ -127,7 +136,7 @@ async def on_command_error(ctx, error):
 #============== help commands ==============
 @client.command()
 async def help(ctx):
-    embed = discord.Embed(colour=random.choice(colours), title="Help!", description="See my current prefix by typing @myname") #Add your name here once you contribute lol
+    embed = discord.Embed(colour=random.choice(colours), title="Help!", description="See my current prefix by typing @myname") 
 
     embed.add_field(name="__General commands__", value="=========================", inline=False)
     embed.add_field(name="ping", value="Sends the bot's ping.", inline=False)
@@ -140,7 +149,7 @@ async def help(ctx):
     #Admin
     embed.add_field(name="__Admin__", value="👮‍♂️ .admin", inline=False)
 
-    embed.set_footer(text="Developed by de_Chaplin")
+    embed.set_footer(text="Developed by de_Chaplin + edwardo66")
     await ctx.send(embed=embed)
 
 #Music
@@ -175,10 +184,13 @@ async def economy(ctx):
     embed.add_field(name="balance/bal", value="Displays your current balance", inline=False)
     embed.add_field(name="deposit/dp", value="Deposits money from your wallet into your bank", inline=False)
     embed.add_field(name="withdraw/wd", value="Withdraws money from your bank into your wallet", inline=False)
+    embed.add_field(name="dpvault/dpv", value="Deposits money from your wallet into your vault", inline=False)
+    embed.add_field(name="wdvault/wdv", value="Withdraws money from your bank into your vault", inline=False)
     embed.add_field(name="beg", value="Beg for money 🥺", inline=False)
     embed.add_field(name="slots", value="Gamble some moneyyyyy 🤑", inline=False)
     embed.add_field(name="rob", value="Robs whoever you @ 🦹‍♂️", inline=False)
     embed.add_field(name="send", value="Sends money from your wallet to whoever you @ 💸", inline=False)
+    embed.add_field(name="shop", value="Allows you to buy a number of different things", inline=False)
 
     await ctx.send(embed=embed)
 
@@ -192,6 +204,8 @@ async def admin(ctx):
     embed.add_field(name="changeprefix", value="Changes the prefix for the bot", inline=False)
 
     await ctx.send(embed=embed)
+
+#badger bullying
 
 
 
@@ -223,10 +237,12 @@ async def balance(ctx, member: discord.Member = None):  #checks users balance
     user = member
     wallet_amount = users[str(user.id)]["wallet"]
     bank_amount = users[str(user.id)]["bank"]
+    vault_amount = users[str(user.id)]["vault"]
 
     balEmbed = discord.Embed(title = f"{member.name}'s balance", colour = discord.Color.red())
     balEmbed.add_field(name = "Wallet", value = wallet_amount)
     balEmbed.add_field(name = "Bank", value = bank_amount)
+    balEmbed.add_field(name = "Vault", value = vault_amount)
     await ctx.send(embed = balEmbed)
 
 @client.command()
@@ -245,9 +261,15 @@ async def beg(ctx):
     with open("mainbank.json", "w") as f:
         json.dump(users, f, indent=4)
 
-#Withdrawing money from bank
+#SHOP
+@client.command()
+async def shop(ctx):
 
+  await ctx.send("The shop isn't ready quite yet!")
+
+#Withdrawing money from bank
 @client.command(aliases=['wd'])
+@commands.cooldown(1, 21600, commands.BucketType.user) #Sets the cooldown
 async def withdraw(ctx,amount = None):
     await open_account(ctx.author)
     if amount == None:
@@ -269,8 +291,30 @@ async def withdraw(ctx,amount = None):
     await update_bank(ctx.author,-1*amount,'bank')
     await ctx.send(f'{ctx.author.mention} You withdrew {amount} coins')
 
-#deposit money to bank
+#Withdrawing money from vault
+@client.command(aliases=['wdv'])
+async def wdvault(ctx,amount = None):
+    await open_account(ctx.author)
+    if amount == None:
+        await ctx.send("Please enter the amount")
+        return
 
+    bal = await update_bank(ctx.author)
+
+    amount = int(amount)
+
+    if amount > bal[1]:
+        await ctx.send('You do not have sufficient balance')
+        return
+    if amount < 0:
+        await ctx.send('Amount must be positive!')
+        return
+
+    await update_bank(ctx.author,amount)
+    await update_bank(ctx.author,-1*amount,'vault')
+    await ctx.send(f'{ctx.author.mention} You withdrew {amount} coins from your vault.')
+
+#deposit money to bank
 @client.command(aliases=['dp'])
 async def deposit(ctx,amount = None):
     await open_account(ctx.author)
@@ -294,8 +338,31 @@ async def deposit(ctx,amount = None):
     await update_bank(ctx.author,-1*amount)
     await ctx.send(f'{ctx.author.mention} You deposited {amount} coins')
 
-#send money to someone else
+#deposit money to vault
+@client.command(aliases=['dpv'])
+async def dpvault(ctx,amount = None):
+    await open_account(ctx.author)
+    if amount == None:
+        await ctx.send("Please enter the amount")
+        return
 
+    bal = await update_bank(ctx.author)
+
+    amount = int(amount)
+
+    if amount > bal[0]:
+        await ctx.send('You do not have sufficient balance')
+        return
+    if amount < 0:
+        await ctx.send('Amount must be positive!')
+        return
+
+
+    await update_bank(ctx.author,amount,'vault')
+    await update_bank(ctx.author,-1*amount)
+    await ctx.send(f'{ctx.author.mention} You deposited {amount} coins')
+
+#send money to someone else
 @client.command()
 async def send(ctx,member : discord.Member,amount = None):
     await open_account(ctx.author)
@@ -338,19 +405,28 @@ async def rob(ctx,member : discord.Member):
         await ctx.send('It is useless to rob him :(')
         return
 
+##################
+# WORKING PROGRESS -------------->>>>>
+##################
+
+    if random.randrange(1, 15)<7:
+        loss = random.randrange(0,bal[0])
+
+        await update_bank(member, loss)
+        await update_bank(ctx.author, -1*loss)
+        await ctx.send(f"{ctx.author.mention} You have been caught! You payed {member.mention} {loss}.")
+
+        return
+
     earning = random.randrange(0,bal[0])
 
     await update_bank(ctx.author,earning)
     await update_bank(member,-1*earning)
-    await ctx.send(f'{ctx.author.mention} You robbed {member} and got {earning} coins')
+    await ctx.send(f'{ctx.author.mention} You robbed {member.mention} and got {earning} coins')
 
 #Slots
-##############################################
-# Make it so the slots appear on white squares
-##############################################
-
 @client.command()
-@commands.cooldown(1, 45, commands.BucketType.user) #Sets the cooldown
+@commands.cooldown(3, 45, commands.BucketType.user) #Sets the cooldown
 async def slots(ctx,amount = None):
     await open_account(ctx.author)
     if amount == None:
@@ -376,7 +452,7 @@ async def slots(ctx,amount = None):
     await ctx.send(str(final))
 
     if final[0] == final[1] or final[1] == final[2] or final[0] == final[2]:
-        await update_bank(ctx.author,2*amount)
+        await update_bank(ctx.author,1.5*amount)
         await ctx.send(f'You won :) {ctx.author.mention}')
     else:
         await update_bank(ctx.author,-1*amount)
@@ -391,8 +467,9 @@ async def open_account(user):
         return False
     else:
         users[str(user.id)] = {}
-        users[str(user.id)]["wallet"] = 0
-        users[str(user.id)]["bank"] = 100
+        users[str(user.id)]["wallet"] = 100
+        users[str(user.id)]["bank"] = 500
+        users[str(user.id)]["vault"] = 0
 
     with open("mainbank.json", "w") as f:
         json.dump(users, f, indent=4)
@@ -411,7 +488,7 @@ async def update_bank(user, change=0, mode="wallet"):
     with open ("mainbank.json", "w") as f:
         json.dump(users, f, indent=4)
 
-    bal = users[str(user.id)]["wallet"], users[str(user.id)]["bank"]
+    bal = users[str(user.id)]["wallet"], users[str(user.id)]["bank"], users[str(user.id)]["vault"]
     return bal
 
 #============== Tic Tac Toe ===============
