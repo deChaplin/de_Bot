@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 
 import Checker.database as database
-import Checker.apiUtils as api
+import API.apiUtils as api
 
 
 def start_up():

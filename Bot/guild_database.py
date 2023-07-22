@@ -92,3 +92,23 @@ def get_num_guilds():
         return row[0]
     else:
         return 0
+
+
+# Get all guild IDs in the database
+def get_all_guild_ids():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    # Create a table
+    c.execute("SELECT guild_id FROM guilds")
+    rows = c.fetchall()
+    conn.close()
+
+    ids = []
+
+    for id in rows:
+        ids.append(int(id[0]))
+
+    if ids is not None:
+        return ids
+    else:
+        return 0
