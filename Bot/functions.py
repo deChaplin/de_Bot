@@ -1,6 +1,6 @@
 import nextcord
 import random
-from Bot.guild_database import get_all_guild_ids
+from guild_database import get_all_guild_ids
 
 color_codes = [
     0xFF0000,  # Red

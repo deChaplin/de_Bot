@@ -4,6 +4,7 @@ from nextcord import Interaction
 
 from Bot.functions import *
 
+
 class Help(commands.Cog):
     def __init__(self, client):
         self.client = client

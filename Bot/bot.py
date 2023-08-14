@@ -4,8 +4,9 @@ from nextcord.ext import commands, tasks
 import os
 from Checker import vacChecker
 import guild_database
-from Bot.functions import *
-from Bot.env import get_token, get_steam_key
+import random
+from env import get_token, get_steam_key
+import functions
 
 # Setting up the client and intents
 intents = nextcord.Intents.all()
@@ -66,11 +67,11 @@ async def on_message(message):
 
     if not guild_database.check_guild(message.guild.id):
         guild_database.add_guild(message.guild.id, DEFAULT_PREFIX)
-        get_guild_id()
+        functions.get_guild_id()
 
     mention = f'<@{client.user.id}>'
     if message.content == mention:
-        get_guild_id()
+        functions.get_guild_id()
         await message.channel.send("I'm using slash commands :)")
         #await message.channel.send("My prefix is " + guild_database.get_prefix(message.guild.id))
 
@@ -114,8 +115,8 @@ async def check_vac():
                     vacChecker.check_vac(KEY, s_id, int(id))
 
                 if game_banned == "Yes" or vac_banned == "Yes":
-                    embed = create_embed("Profile Status", "The current status of " + name,
-                                         get_random_colour(), [
+                    embed = functions.create_embed("Profile Status", "The current status of " + name,
+                                         functions.get_random_colour(), [
                                              ("Name - ", name, False),
                                              ("Steam ID - ", steamID, False),
                                              ("Game Banned - ", game_banned, False),
@@ -158,7 +159,7 @@ async def main():
     # Loading all cogs
     initial_extensions = []
 
-    for filename in os.listdir('./Cogs'):
+    for filename in os.listdir('../Cogs'):
         if filename.endswith('.py'):
             initial_extensions.append("Cogs." + filename[:-3])
                 # await client.load_extension(f'Cogs.{filename[:-3]}')
