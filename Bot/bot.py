@@ -1,4 +1,7 @@
 import asyncio
+import sys
+from datetime import datetime
+
 import nextcord
 from nextcord.ext import commands, tasks
 import os
@@ -34,16 +37,33 @@ KEY = get_steam_key()
 # Standard Events
 # ======================================================================================================================
 
-
+# On ready
 @client.event
 async def on_ready():
     vacChecker.start_up()
-    print('Bot is ready!')
-    change_status.start()
-    check_vac.start()
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Bot is ready!")
+
+    #if not change_status.is_running():
+        #change_status.start()
+
+    if not check_vac.is_running():
+        check_vac.start()
 
     guild_database.create_database()
 
+# On bot disconnect
+@client.event
+async def on_shutdown():
+    print("Bot is shutting down. Stopping tasks.")
+    change_status.stop()
+    check_vac.stop()
+    await client.close()
+
+# On error
+@client.event
+async def on_error(event, *args, **kwargs):
+    print(f"Error in event {event}: {sys.exc_info()}")
 
 # On guild join
 @client.event
@@ -169,4 +189,7 @@ async def main():
 
     await client.start(TOKEN)
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except Exception as e:
+    print(f"An error occurred: {e}")
