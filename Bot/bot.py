@@ -2,6 +2,8 @@ import asyncio
 import sys
 from datetime import datetime
 
+import logging
+
 import nextcord
 from nextcord.ext import commands, tasks
 import os
@@ -16,6 +18,7 @@ intents = nextcord.Intents.all()
 # Setting up the bots prefix
 DEFAULT_PREFIX = '!'
 
+#logging.basicConfig(level=logging.DEBUG)
 
 async def get_prefix(client, message):
     if not message.guild:
@@ -44,26 +47,49 @@ async def on_ready():
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"{current_time} - Bot is ready!")
 
-    #if not change_status.is_running():
-        #change_status.start()
+    if not change_status.is_running():
+        change_status.start()
 
     if not check_vac.is_running():
         check_vac.start()
 
     guild_database.create_database()
 
-# On bot disconnect
+# On bot shutdown
 @client.event
 async def on_shutdown():
-    print("Bot is shutting down. Stopping tasks.")
-    change_status.stop()
-    check_vac.stop()
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Bot is shutting down. Stopping tasks.")
+
+    if change_status.is_running():
+        change_status.stop()
+    if check_vac.is_running():
+        check_vac.stop()
+
     await client.close()
+
+# On bot disconnect from discord
+@client.event
+async def on_disconnect():
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Bot is disconnecting. Stopping tasks.")
+
+    if change_status.is_running():
+        change_status.stop()
+    if check_vac.is_running():
+        check_vac.stop()
+
+# On bot connect to discord
+@client.event
+async def on_connect():
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Bot is connecting.")
 
 # On error
 @client.event
 async def on_error(event, *args, **kwargs):
-    print(f"Error in event {event}: {sys.exc_info()}")
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Error in event {event}: {sys.exc_info()}")
 
 # On guild join
 @client.event
@@ -104,22 +130,26 @@ async def on_message(message):
 # ======================================================================================================================
 
 
-@tasks.loop(seconds=1)
+@tasks.loop(seconds=4)
 async def change_status():
     status = [" something", " who gets banned!", " you 👀", " r/Piracy",
-               str(get_guilds()) + " servers!"]
+           str(get_guilds()) + " servers!"]
 
     await client.change_presence(activity=nextcord.Activity(type=nextcord.ActivityType.watching,
-                                                           name=(random.choice(status))))
-    await asyncio.sleep(3)
+                                                            name=(random.choice(status))))
+        #await asyncio.sleep(4)
 
 
 # Loop to check for vac bans on all accounts every hour
-@tasks.loop(minutes=60)
+@tasks.loop(minutes=3)
 async def check_vac():
     # Get list of user ids from database
     # iterate through list to check all accounts belonging to user
     # send private message to user
+
+    # Output the current time to the console
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{current_time} - Checking for VAC bans")
 
     # Will run for the number of unique discord ids in the database
     discord_ids = vacChecker.get_discord_id()
@@ -147,6 +177,8 @@ async def check_vac():
                                          ])
                     await user.send(embed=embed)
                     vacChecker.remove_account(steamID, int(id))
+
+        #await asyncio.sleep(60 * 60)
 
 
 # ======================================================================================================================
@@ -184,12 +216,17 @@ async def main():
             initial_extensions.append("Cogs." + filename[:-3])
                 # await client.load_extension(f'Cogs.{filename[:-3]}')
 
-    for extention in initial_extensions:
-        client.load_extension(extention)
+    for extension in initial_extensions:
+        client.load_extension(extension)
 
-    await client.start(TOKEN)
+    # Start the loops
+    #change_status.start()
+    #check_vac.start()
 
-try:
-    asyncio.run(main())
-except Exception as e:
-    print(f"An error occurred: {e}")
+    try:
+        await client.start(TOKEN)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+asyncio.run(main())
